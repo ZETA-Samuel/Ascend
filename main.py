@@ -11,6 +11,7 @@ clock = pygame.time.Clock()
 
 player = Player()
 ground_y = 550
+hold = pygame.Rect(350,400,100,15)
 
 running = True
 while running:
@@ -26,7 +27,8 @@ while running:
     player.move(keys, dt)
 
     pygame.draw.line(screen, 'black', (0,ground_y), (width, ground_y), 3)
-        
+    pygame.draw.rect(screen,'yellow',hold)
+    player.check_collision(hold,keys,dt)
     player.draw(screen)
     player.update(dt, ground_y)
     pygame.display.update()
