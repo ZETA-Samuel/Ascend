@@ -10,7 +10,7 @@ class Player:
         self.speed = 500
         self.jump_strength = 600
         self.holding = False
-  
+        self.grab_locked = False
 
         self.velocity_y = 0
 
@@ -18,9 +18,7 @@ class Player:
 
     def move(self,keys,dt):
         # vertical movement
-        if (keys[pygame.K_w] or keys[pygame.K_SPACE]):
-
-            if self.on_ground:
+        if keys[pygame.K_w] and self.on_ground:
                 self.velocity_y = -self.jump_strength 
                 self.on_ground = False
 
@@ -31,19 +29,26 @@ class Player:
         if keys[pygame.K_d]:
             self.rect.x += self.speed * dt
 
-    def check_collision(self,hold,keys,dt):
-        if self.rect.colliderect(hold):
-            self.holding = True
-            print("holding")
-            if keys[pygame.K_q]:
-                self.holding = False
-            if keys[pygame.K_SPACE]:
-                self.holding = False
-                self.rect.y += -self.jump_strength * dt
+    def check_collision(self,hold):
+        top_hitbox = pygame.Rect(self.rect.x,self.rect.y,self.rect.width,10)
+
+        if top_hitbox.colliderect(hold):
+            if not self.holding and not self.grab_locked:
+                self.holding = True
+                self.velocity_y = 0
+
+                # center the player beneath the hold
+                # self.rect.centerx = hold.centerx
+                self.rect.top = hold.top
         else:
+            self.grab_locked = False
             self.holding = False
-        # if keys[pygame.K_q]:
-        #     self.holding = False
+
+    def release_hold(self):
+        if self.holding:
+            self.holding = False
+            self.grab_locked = True
+            self.velocity_y = -self.jump_strength
 
     def draw(self,surface):
         pygame.draw.rect(surface,'red', self.rect)
@@ -52,12 +57,10 @@ class Player:
         # apply gravity
 
         self.on_ground = False
-        self.velocity_y += self.gravity * dt
-
-        # apply vertical movement
-        if self.holding:
-            self.velocity_y = 0
-        self.rect.y += self.velocity_y * dt
+        if not self.holding:
+            self.velocity_y += self.gravity * dt
+        
+            self.rect.y += self.velocity_y * dt
 
         # ground collision
         if self.rect.bottom >= ground_y:

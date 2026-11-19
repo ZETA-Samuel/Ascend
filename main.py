@@ -22,13 +22,17 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                player.release_hold()
+
     keys = pygame.key.get_pressed()
 
     player.move(keys, dt)
 
     pygame.draw.line(screen, 'black', (0,ground_y), (width, ground_y), 3)
     pygame.draw.rect(screen,'yellow',hold)
-    player.check_collision(hold,keys,dt)
+    player.check_collision(hold)
     player.draw(screen)
     player.update(dt, ground_y)
     pygame.display.update()
