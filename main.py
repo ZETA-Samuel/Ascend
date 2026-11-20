@@ -11,7 +11,11 @@ clock = pygame.time.Clock()
 
 player = Player()
 ground_y = 550
-hold = pygame.Rect(350,400,100,15)
+hold_1 = pygame.Rect(350,400,100,15)
+hold_2 = pygame.Rect(350,300,100,15)
+hold_3 = pygame.Rect(350,200,100,15)
+hold_4 = pygame.Rect(350,100,100,15)
+holds = [hold_1,hold_2,hold_3,hold_4]
 
 running = True
 while running:
@@ -31,8 +35,10 @@ while running:
     player.move(keys, dt)
 
     pygame.draw.line(screen, 'black', (0,ground_y), (width, ground_y), 3)
-    pygame.draw.rect(screen,'yellow',hold)
-    player.check_collision(hold)
+    for hold in holds:
+        pygame.draw.rect(screen,'yellow',hold)
+        player.check_collision(holds)
+ 
     player.draw(screen)
     player.update(dt, ground_y)
     pygame.display.update()

@@ -29,20 +29,23 @@ class Player:
         if keys[pygame.K_d]:
             self.rect.x += self.speed * dt
 
-    def check_collision(self,hold):
+    def check_collision(self,holds):
         top_hitbox = pygame.Rect(self.rect.x,self.rect.y,self.rect.width,10)
 
-        if top_hitbox.colliderect(hold):
+        touching_hold = any(top_hitbox.colliderect(hold) for hold in holds)
+
+        if touching_hold:
             if not self.holding and not self.grab_locked:
                 self.holding = True
                 self.velocity_y = 0
 
-                # center the player beneath the hold
-                # self.rect.centerx = hold.centerx
-                self.rect.top = hold.top
+                for hold in holds:
+                    if top_hitbox.colliderect(hold):
+                        self.rect.top = hold.top 
+                        break
+
         else:
             self.grab_locked = False
-            self.holding = False
 
     def release_hold(self):
         if self.holding:
