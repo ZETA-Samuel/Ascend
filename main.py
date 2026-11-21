@@ -33,11 +33,12 @@ while running:
     keys = pygame.key.get_pressed()
 
     player.move(keys, dt)
+    player.check_hold_edge(holds)
 
     pygame.draw.line(screen, 'black', (0,ground_y), (width, ground_y), 3)
     for hold in holds:
         pygame.draw.rect(screen,'yellow',hold)
-        player.check_collision(holds)
+    player.check_collision(holds)
  
     player.draw(screen)
     player.update(dt, ground_y)
