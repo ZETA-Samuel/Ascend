@@ -101,14 +101,15 @@ class Player:
             else:
                 new_state = 'idle_hold'
 
-        elif not self.on_ground:
-            new_state = 'jump'
+        elif self.on_ground:
+            if abs(self.velocity_x) > 25:
+                new_state = 'walk'
 
-        elif abs(self.velocity_x) > 25:
-            new_state = 'walk'
+            else:
+                new_state = 'idle'
 
         else:
-            new_state = 'idle'
+            new_state = 'jump'
 
         if new_state != self.animation_state:
             self.animation_state = new_state
@@ -179,18 +180,22 @@ class Player:
             self.grab_locked = False
             self.locked_bar = None
 
-        if self.velocity_y >= 0:
-            return
-
         for bar in bars:
             crossed_bar_bottom = (
                 self.previous_rect.top >= bar.bottom
                 and self.rect.top <= bar.bottom
             )
+            crossed_bar_top = (
+                self.previous_rect.top + head_hitbox.height <= bar.top
+                and self.rect.top + head_hitbox.height >= bar.top
+            )
             horizontal_overlap = (
                 head_hitbox.right > bar.left and head_hitbox.left < bar.right
             )
-            if head_hitbox.colliderect(bar) or crossed_bar_bottom and horizontal_overlap:
+            crossed_bar = horizontal_overlap and (
+                crossed_bar_bottom or crossed_bar_top
+            )
+            if head_hitbox.colliderect(bar) or crossed_bar:
                 self.holding = True
                 self.holding_bar = bar
                 self.grab_locked = False
@@ -239,5 +244,4 @@ class Player:
         if not pygame.key.get_pressed()[pygame.K_a] and not pygame.key.get_pressed()[pygame.K_d]:
             self.velocity_x *= self.friction  ** (dt * 60)
 
-        self.update_animations(dt)
         

@@ -36,6 +36,20 @@ class GameLogicTests(unittest.TestCase):
         self.assertEqual(self.player.rect.top, bar.bottom)
         self.assertEqual(self.player.velocity_y, 0)
 
+    def test_player_grabs_bar_while_falling(self):
+        bar = pygame.Rect(350, 400, 100, 15)
+        self.player.previous_rect = pygame.Rect(380, 380, 32, 52)
+        self.player.rect = pygame.Rect(380, 430, 32, 52)
+        self.player.pos.y = self.player.rect.y
+        self.player.velocity_y = 600
+
+        self.player.check_bar_collision([bar])
+
+        self.assertTrue(self.player.holding)
+        self.assertIs(self.player.holding_bar, bar)
+        self.assertEqual(self.player.rect.top, bar.bottom)
+        self.assertEqual(self.player.velocity_y, 0)
+
     def test_releasing_a_bar_unlocks_after_head_clears_it(self):
         bar = pygame.Rect(350, 400, 100, 15)
         self.player.holding = True
