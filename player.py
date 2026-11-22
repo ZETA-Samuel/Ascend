@@ -1,17 +1,25 @@
+from pathlib import Path
+
 import pygame
-import os
 
 class Player:
 
     def __init__(self):
         self.width = 32
         self.height = 52
-        self.rect = pygame.Rect(380,300, self.width,self.height)
+
+        self.rect = pygame.Rect(0,33, self.width,self.height)
         self.pos = pygame.Vector2(self.rect.topleft)
+
+        self.previous_rect = self.rect.copy()
+
         self.gravity = 1200
         self.speed = 500
         self.jump_strength = 600
+
         self.holding = False
+        self.holding_bar = None
+        self.locked_bar = None
         self.grab_locked = False
         self.velocity_x = 0
         self.velocity_y = 0
@@ -22,8 +30,11 @@ class Player:
 
         # Animations
         self.animations = {
-            'idle': self.load_frames('assets/idle.png', 30),
-            'walk': self.load_frames('assets/walk.png', 30)
+            'idle': self.load_frames('idle.png', 30),
+            'walk': self.load_frames('walk.png', 30),
+            'jump': self.load_frames('jump.png', 30),
+            'idle_hold': self.load_frames('idle_hang.png', 30),
+            'moving_hold': self.load_frames('hang_left.png', 30)
         }
 
         self.animation_state = 'idle'
@@ -31,13 +42,17 @@ class Player:
         self.animation_timer = 0
         self.animation_speeds = {
             'idle': 0.6,
-            'walk': 0.08
+            'walk': 0.08,
+            'jump': 0.1,
+            'idle_hold': 0.15,
+            'moving_hold': 0.08
         }
 
         self.facing_right = True
 
-    def load_frames(self,path, frame_width):
-        sheet = pygame.image.load(path).convert_alpha()
+    def load_frames(self, filename, frame_width):
+        path = Path(__file__).parent / "assets" / filename
+        sheet = pygame.image.load(str(path)).convert_alpha()
 
         frames = []
         frame_height = sheet.get_height()
@@ -54,6 +69,8 @@ class Player:
 
     def move(self,keys,dt):
         # vertical movement
+        self.previous_rect = self.rect.copy()
+
         if keys[pygame.K_SPACE] and self.on_ground:
                 self.velocity_y = -self.jump_strength 
                 self.on_ground = False
@@ -77,7 +94,17 @@ class Player:
 
     def update_animations(self, dt):
 
-        if abs(self.velocity_x) > 25:
+        if self.holding:
+
+            if abs(self.velocity_x) > 25:
+                new_state = 'moving_hold'
+            else:
+                new_state = 'idle_hold'
+
+        elif not self.on_ground:
+            new_state = 'jump'
+
+        elif abs(self.velocity_x) > 25:
             new_state = 'walk'
 
         else:
@@ -99,46 +126,88 @@ class Player:
 
             self.frame_index = (self.frame_index + 1) % len(frames)
 
-    def check_collision(self,holds):
-        if self.holding:
-            return
-
-        top_hitbox = pygame.Rect(self.rect.x,self.rect.y,self.rect.width,10)
-
-        for hold in holds:
-            if top_hitbox.colliderect(hold):
-                # if self.rect.x < hold.x : self.rect.x = hold.x
-                # if self.rect.x > (hold.x + hold.width) : self.rect.x = hold.x + hold.width
-                if not self.grab_locked:
-                    self.holding = True
-                    self.velocity_y = 0
-                    self.rect.top = hold.top 
-                    self.pos.y = self.rect.y
-                return
-        self.grab_locked = False
-
-    def check_hold_edge(self,holds):
+    def check_hold_edge(self):
         if not self.holding:
             return
 
+        if self.holding_bar is None:
+            return
+
         player_center = self.rect.centerx
+        bar = self.holding_bar
 
-        standing_on_hold = False
+        if not (bar.left <= player_center <= bar.right):
 
-        for hold in holds:
-            if self.rect.top == hold.top:
-                if hold.left <= player_center <= hold.right:
-                    standing_on_hold = True
-                    break
-
-        if not standing_on_hold:
             self.holding = False
+            self.holding_bar = None
+
+
+    def check_platform_collision(self, platforms):
+
+        if self.velocity_y < 0:
+            return
+
+        for platform in platforms:
+            crossed_platform_top = (
+                self.previous_rect.bottom <= platform.top
+                and self.rect.bottom >= platform.top
+            )
+            overlaps_horizontally = (
+                self.rect.right > platform.left
+                and self.rect.left < platform.right
+            )
+            if crossed_platform_top and overlaps_horizontally:
+                self.rect.bottom = platform.top
+                self.pos.y = self.rect.y
+                self.velocity_y = 0
+                self.on_ground = True
+
+    def check_bar_collision(self, bars):
+        if self.holding:
+            return
+
+        head_hitbox = pygame.Rect(
+            self.rect.left + 4,
+            self.rect.top,
+            self.rect.width - 8,
+            10
+        )
+
+        if self.grab_locked:
+            if self.locked_bar is not None and head_hitbox.colliderect(self.locked_bar):
+                return
+            self.grab_locked = False
+            self.locked_bar = None
+
+        if self.velocity_y >= 0:
+            return
+
+        for bar in bars:
+            crossed_bar_bottom = (
+                self.previous_rect.top >= bar.bottom
+                and self.rect.top <= bar.bottom
+            )
+            horizontal_overlap = (
+                head_hitbox.right > bar.left and head_hitbox.left < bar.right
+            )
+            if head_hitbox.colliderect(bar) or crossed_bar_bottom and horizontal_overlap:
+                self.holding = True
+                self.holding_bar = bar
+                self.grab_locked = False
+                self.locked_bar = None
+                self.velocity_y = 0
+
+                self.rect.top = bar.bottom
+                self.pos.y = self.rect.y
+
+                return
 
     def release_hold(self):
         if self.holding:
-            # pygame.time.wait(1000)
             self.holding = False
             self.grab_locked = True
+            self.locked_bar = self.holding_bar
+            self.holding_bar = None
             self.velocity_y = -self.jump_strength
 
     def draw(self,surface,camera):
@@ -155,6 +224,7 @@ class Player:
         # apply gravity
 
         self.on_ground = False
+
         if not self.holding:
             self.velocity_y += self.gravity * dt
             self.pos.y += self.velocity_y * dt
