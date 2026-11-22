@@ -79,8 +79,8 @@ class Player:
             self.grab_locked = True
             self.velocity_y = -self.jump_strength
 
-    def draw(self,surface):
-        pygame.draw.rect(surface,'red', self.rect)
+    def draw(self,surface,camera):
+        pygame.draw.rect(surface,'red', camera.apply(self.rect))
 
     def update(self, dt, ground_y):
         # apply gravity
