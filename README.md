@@ -17,11 +17,13 @@ Well, mine runs on the Webpage ( You are welcome :] )
 
 ## Demo
 You can try the game at:
-
+https://zeta-samuel.github.io/Ascend/
 
 ## Does the game work?
 Here is the proof:
-
+![MENU](proof/menu.png)
+![Instructions](proof/instructions.png)
+![Game Play](proof/game_play.png)
 
 ## Run in a browser
 
