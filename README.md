@@ -7,6 +7,9 @@ Though, there are no obstacles, maybe your skills will be tested (not to the ful
 
 The game is easy to play and get used to. 
 
+The game is made using pygame. If you like platformers you will love this style of game. 
+It has a unique vibe to it. You can grab bars and walk on platforms and jump from one platform to another. 
+
 Is this a new concept?
 Ans: Maybe. Well you may find different game-play style of different games with a stick-man protagonist.
 
